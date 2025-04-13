@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { CustomError, RegisterUserDto } from '../../domain';
 import { MongoAuthDatasource, MongoAuthRepository } from '../../infrastructure';
 import { JwtAdapter } from '../../config';
+import { UserModel } from '../../data';
 
 export class AuthController {
 	constructor(private readonly authRepository: MongoAuthRepository) {}
@@ -22,11 +23,16 @@ export class AuthController {
 		this.authRepository
 			.register(data!)
 			.then(async user => {
-				res.status(201).json({ user, token: await JwtAdapter.generateToken({ email: user.email }) });
+				res.status(201).json({ user, token: await JwtAdapter.generateToken({ id: user.id }) });
 			})
 			.catch(error => this.handleError(error, res));
 	};
 	loginUser = (req: Request, res: Response) => {
 		res.json('login user controller');
+	};
+	getUser = (req: Request, res: Response) => {
+		UserModel.find()
+			.then(users => res.json({ user: req.body.user }))
+			.catch(error => res.status(500).json({ error: 'Internal server error' }));
 	};
 }
