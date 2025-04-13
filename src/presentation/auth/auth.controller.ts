@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import { CustomError, RegisterUserDto } from '../../domain';
+import { MongoAuthDatasource } from '../../infrastructure';
 
 export class AuthController {
-	constructor() {}
+	constructor(private readonly authRepository: MongoAuthDatasource) {}
 
 	private handleError(error: unknown, res: Response): void {
 		console.error({ source: 'auth.controller.ts', error });
@@ -19,7 +20,10 @@ export class AuthController {
 		const [error, data] = RegisterUserDto.create(req.body);
 		if (error) this.handleError(CustomError.badRequest(error), res);
 
-		res.json(data);
+		this.authRepository
+			.register(data!)
+			.then(resp => res.status(201).json(resp))
+			.catch(error => this.handleError(error, res));
 	};
 	loginUser = (req: Request, res: Response) => {
 		res.json('login user controller');
