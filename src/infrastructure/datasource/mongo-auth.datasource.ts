@@ -16,13 +16,19 @@ export class MongoAuthDatasource implements AuthDatasource {
 
 	async login(loginUserDto: LoginUserDto): Promise<UserEntity> {
 		const { email, password } = loginUserDto;
-		const user = await UserModel.findOne({ email });
-		if (!user) throw CustomError.unAuthorized('Credenciales invalidas');
 
-		const isPasswordValid = this.comparePassword(password, user.password);
-		if (!isPasswordValid) throw CustomError.unAuthorized('Credenciales invalidas');
+		try {
+			const user = await UserModel.findOne({ email });
+			if (!user) throw CustomError.unAuthorized('Invalid credentials');
 
-		return UserMappers.userEntityFromObject(user);
+			const isPasswordValid = this.comparePassword(password, user.password);
+			if (!isPasswordValid) throw CustomError.unAuthorized('Invalid credentials');
+
+			return UserMappers.userEntityFromObject(user);
+		} catch (error) {
+			if (error instanceof CustomError) throw error;
+			throw CustomError.internalServer();
+		}
 	}
 
 	async register(registerUserDto: RegisterUserDto): Promise<UserEntity> {
