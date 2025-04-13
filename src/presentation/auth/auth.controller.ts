@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { CustomError, RegisterUserDto } from '../../domain';
 import { MongoAuthDatasource, MongoAuthRepository } from '../../infrastructure';
+import { JwtAdapter } from '../../config';
 
 export class AuthController {
 	constructor(private readonly authRepository: MongoAuthRepository) {}
@@ -20,7 +21,9 @@ export class AuthController {
 
 		this.authRepository
 			.register(data!)
-			.then(resp => res.status(201).json(resp))
+			.then(async user => {
+				res.status(201).json({ user, token: await JwtAdapter.generateToken({ email: user.email }) });
+			})
 			.catch(error => this.handleError(error, res));
 	};
 	loginUser = (req: Request, res: Response) => {
