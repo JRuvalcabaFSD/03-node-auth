@@ -1,6 +1,8 @@
+import { userInfo } from 'os';
 import { BcryptAdapter } from '../../config';
 import { UserModel } from '../../data';
 import { AuthDatasource, CustomError, RegisterUserDto, UserEntity } from '../../domain';
+import { LoginUserDto } from '../../domain/dtos/auth/login-user.tdo';
 import { UserMappers } from '../mappers/user.mapper';
 
 type HashFunction = (password: string) => string;
@@ -11,6 +13,17 @@ export class MongoAuthDatasource implements AuthDatasource {
 		private readonly hashPassword: HashFunction = BcryptAdapter.hash,
 		private readonly comparePassword: CompareFunction = BcryptAdapter.validate
 	) {}
+
+	async login(loginUserDto: LoginUserDto): Promise<UserEntity> {
+		const { email, password } = loginUserDto;
+		const user = await UserModel.findOne({ email });
+		if (!user) throw CustomError.unAuthorized('Credenciales invalidas');
+
+		const isPasswordValid = this.comparePassword(password, user.password);
+		if (!isPasswordValid) throw CustomError.unAuthorized('Credenciales invalidas');
+
+		return UserMappers.userEntityFromObject(user);
+	}
 
 	async register(registerUserDto: RegisterUserDto): Promise<UserEntity> {
 		const { name, email, password } = registerUserDto;

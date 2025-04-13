@@ -1,14 +1,7 @@
-import { Response } from 'express';
 import { Validators } from '../../../config';
-import { CustomError } from '../../error/custom.error';
-import { resourceLimits } from 'worker_threads';
 
 export class RegisterUserDto {
-	private constructor(
-		public name: string,
-		public email: string,
-		public password: string
-	) {}
+	private constructor(public name: string, public email: string, public password: string) {}
 
 	static create(object: { [key: string]: any }): [string?, RegisterUserDto?] {
 		if (!object) object = {};
