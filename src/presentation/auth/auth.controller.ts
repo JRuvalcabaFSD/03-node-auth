@@ -1,13 +1,11 @@
 import { Request, Response } from 'express';
 import { CustomError, RegisterUserDto } from '../../domain';
-import { MongoAuthDatasource } from '../../infrastructure';
+import { MongoAuthDatasource, MongoAuthRepository } from '../../infrastructure';
 
 export class AuthController {
-	constructor(private readonly authRepository: MongoAuthDatasource) {}
+	constructor(private readonly authRepository: MongoAuthRepository) {}
 
 	private handleError(error: unknown, res: Response): void {
-		console.error({ source: 'auth.controller.ts', error });
-
 		if (error instanceof CustomError) {
 			res.status(error.httpCode).json({ error: error.message });
 			return;

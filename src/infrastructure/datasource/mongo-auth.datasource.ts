@@ -1,21 +1,34 @@
-import {
-	AuthDatasource,
-	CustomError,
-	RegisterUserDto,
-	UserEntity,
-} from '../../domain';
+import { BcryptAdapter } from '../../config';
+import { UserModel } from '../../data';
+import { AuthDatasource, CustomError, RegisterUserDto, UserEntity } from '../../domain';
+import { UserMappers } from '../mappers/user.mapper';
+
+type HashFunction = (password: string) => string;
+type CompareFunction = (password: string, hashed: string) => boolean;
 
 export class MongoAuthDatasource implements AuthDatasource {
-	constructor() {}
+	constructor(
+		private readonly hashPassword: HashFunction = BcryptAdapter.hash,
+		private readonly comparePassword: CompareFunction = BcryptAdapter.validate
+	) {}
+
 	async register(registerUserDto: RegisterUserDto): Promise<UserEntity> {
 		const { name, email, password } = registerUserDto;
 
 		try {
-			//TODO
 			// 1. verificar correo
+			const emailExist = (await UserModel.countDocuments({ email })) >= 1;
+			if (emailExist) throw CustomError.badRequest('User already exists');
+
 			// 2. Has de contraseña
+			const hashPassword = this.hashPassword(password);
+
+			// 3. Crear usuario
+			const user = await UserModel.create({ name, email, password: hashPassword });
+			await user.save();
+
 			// 3. Mapear la respuesta a nuestra entidad
-			return new UserEntity('1', email, password, ['ADMIN_ROLE']);
+			return UserMappers.userEntityFromObject(user);
 		} catch (error) {
 			if (error instanceof CustomError) throw error;
 			throw CustomError.internalServer();
