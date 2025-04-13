@@ -18,6 +18,9 @@ export class Server {
 
 	async start() {
 		//Middlewares
+		this.app.use(express.json());
+		this.app.use(express.urlencoded({ extended: true }));
+
 		// Routes
 		this.app.use(this.routes);
 		this.app.listen(this.port, () => {
